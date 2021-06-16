@@ -961,8 +961,12 @@ function Arena:draw()
     end
   end
   if true then
+    local character_overrides = {
+      arcanist_projectile = "arcanist"
+    }
     local data = self.data_cache or {}
     for character,amount in pairs( stats_tracker.damage.all ) do
+      character = character_overrides[character] or character
       if amount > 0 then
         data[character] = amount
       end

@@ -424,20 +424,8 @@ function Seeker:hit(damage, source)
   if self.vulnerable then actual_damage = actual_damage*1.2 end
   
   if source and source.character then
-    --local unit = source
-    --if not unit:is( Player ) then
-    --  unit = source.parent or source.source
-    --  while unit and (
-    --  ( unit.parent and not unit.parent:is( Player ) ) or
-    --  ( unit.source and not unit.source:is( Player ) )
-    --  ) do
-    --    unit = unit.parent or unit.source
-    --  end
-    --end
-    --if unit and unit.character then
       local adjusted_damage = math.min( self.hp, actual_damage )
       stats_tracker.damage.all[source.character] = (stats_tracker.damage.all[source.character] or 0 ) + adjusted_damage
-    --end
   end
   
   self.hp = self.hp - actual_damage
