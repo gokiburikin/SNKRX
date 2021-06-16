@@ -1524,6 +1524,22 @@ function init()
     end
   end)
 
+  stats_tracker = nil
+  clear_stats_tracker = function()
+    stats_tracker = {
+      damage = {
+        all = {},
+        projectile = {},
+        area = {},
+        dot = {},
+        collision = {},
+        healing = {}
+      }
+    }
+  end
+  clear_stats_tracker()
+
+
   --[[
   print(table.tostring(love.graphics.getSupported()))
   print(love.graphics.getRendererInfo())

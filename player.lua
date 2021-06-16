@@ -2,21 +2,12 @@ Player = Object:extend()
 Player:implement(GameObject)
 Player:implement(Physics)
 Player:implement(Unit)
+function Player:__tostring() return "Player" end
+
 function Player:init(args)
   self:init_game_object(args)
   self:init_unit()
-
-  self.stats_tracker = {
-    damage = {
-      all = 0,
-      projectile = 0,
-      area = 0,
-      dot = 0,
-      collision = 0
-    },
-    healing = {}
-  }
-
+  
   if self.passives then for k, v in pairs(self.passives) do self[v.passive] = v.level end end
 
   self.color = character_colors[self.character]
@@ -1726,6 +1717,7 @@ end
 Projectile = Object:extend()
 Projectile:implement(GameObject)
 Projectile:implement(Physics)
+function Projectile:__tostring() return "Projectile" end
 function Projectile:init(args)
   self:init_game_object(args)
   self.hfx:add('hit', 1)
@@ -2143,6 +2135,7 @@ end
 
 Area = Object:extend()
 Area:implement(GameObject)
+function Area:__tostring() return "Area" end
 function Area:init(args)
   self:init_game_object(args)
   self.shape = Rectangle(self.x, self.y, 1.5*self.w, 1.5*self.w, self.r)

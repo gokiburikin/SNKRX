@@ -423,19 +423,21 @@ function Seeker:hit(damage, source)
   local actual_damage = math.max(self:calculate_damage(damage)*(self.stun_dmg_m or 1), 0)
   if self.vulnerable then actual_damage = actual_damage*1.2 end
   
-  if source then
-    local unit = source
-    if not unit:is( Player ) then
-      unit = source.parent
-      while unit and unit.parent and not unit.parent:is( Player ) do
-        unit = unit.parent
-      end
-    end
-    if unit and unit.stats_tracker then
+  if source and source.character then
+    --local unit = source
+    --if not unit:is( Player ) then
+    --  unit = source.parent or source.source
+    --  while unit and (
+    --  ( unit.parent and not unit.parent:is( Player ) ) or
+    --  ( unit.source and not unit.source:is( Player ) )
+    --  ) do
+    --    unit = unit.parent or unit.source
+    --  end
+    --end
+    --if unit and unit.character then
       local adjusted_damage = math.min( self.hp, actual_damage )
-      unit.stats_tracker.damage.all = (unit.stats_tracker.damage.all or 0 ) + adjusted_damage
-      unit.stats_tracker.damage.source = (unit.stats_tracker.damage.source or 0 ) + adjusted_damage
-    end
+      stats_tracker.damage.all[source.character] = (stats_tracker.damage.all[source.character] or 0 ) + adjusted_damage
+    --end
   end
   
   self.hp = self.hp - actual_damage
@@ -644,10 +646,9 @@ function Seeker:apply_dot(dmg, duration, source)
   self.t:every(0.25, function()
     hit2:play{pitch = random:float(0.8, 1.2), volume = 0.2}
     if source then
-      if source and source.stats_tracker then
+      if source and source.character then
         local adjusted_damage = math.min( self.hp, dmg/4 )
-        source.stats_tracker.damage.all = (source.stats_tracker.damage.all or 0 ) + adjusted_damage
-        source.stats_tracker.damage.dot = (source.stats_tracker.damage.dot or 0 ) + adjusted_damage
+        stats_tracker.damage.all[source.character] = (stats_tracker.damage.all[source.character] or 0 ) + adjusted_damage
       end
     end
     self:hit(dmg/4)
