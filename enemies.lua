@@ -412,7 +412,7 @@ function Seeker:on_collision_enter(other, contact)
 end
 
 
-function Seeker:hit(damage, projectile)
+function Seeker:hit(damage, source)
   local pyrod = self.pyrod
   self.pyrod = false
   if self.dead then return end
@@ -422,15 +422,31 @@ function Seeker:hit(damage, projectile)
   
   local actual_damage = math.max(self:calculate_damage(damage)*(self.stun_dmg_m or 1), 0)
   if self.vulnerable then actual_damage = actual_damage*1.2 end
+  
+  if source then
+    local unit = source
+    if not unit:is( Player ) then
+      unit = source.parent
+      while unit and unit.parent and not unit.parent:is( Player ) do
+        unit = unit.parent
+      end
+    end
+    if unit and unit.stats_tracker then
+      local adjusted_damage = math.min( self.hp, actual_damage )
+      unit.stats_tracker.damage.all = (unit.stats_tracker.damage.all or 0 ) + adjusted_damage
+      unit.stats_tracker.damage.source = (unit.stats_tracker.damage.source or 0 ) + adjusted_damage
+    end
+  end
+  
   self.hp = self.hp - actual_damage
   if self.hp > self.max_hp then self.hp = self.max_hp end
   main.current.damage_dealt = main.current.damage_dealt + actual_damage
 
-  if projectile and projectile.spawn_critters_on_hit then
+  if source and source.spawn_critters_on_hit then
     critter1:play{pitch = random:float(0.95, 1.05), volume = 0.5}
     trigger:after(0.01, function()
-      for i = 1, projectile.spawn_critters_on_hit do
-        Critter{group = main.current.main, x = self.x, y = self.y, color = orange[0], r = random:float(0, 2*math.pi), v = 10, dmg = projectile.parent.dmg, parent = projectile.parent}
+      for i = 1, source.spawn_critters_on_hit do
+        Critter{group = main.current.main, x = self.x, y = self.y, color = orange[0], r = random:float(0, 2*math.pi), v = 10, dmg = source.parent.dmg, parent = source.parent}
       end
     end)
   end
@@ -624,9 +640,16 @@ function Seeker:curse(curse, duration, arg1, arg2, arg3)
 end
 
 
-function Seeker:apply_dot(dmg, duration)
+function Seeker:apply_dot(dmg, duration, source)
   self.t:every(0.25, function()
     hit2:play{pitch = random:float(0.8, 1.2), volume = 0.2}
+    if source then
+      if source and source.stats_tracker then
+        local adjusted_damage = math.min( self.hp, dmg/4 )
+        source.stats_tracker.damage.all = (source.stats_tracker.damage.all or 0 ) + adjusted_damage
+        source.stats_tracker.damage.dot = (source.stats_tracker.damage.dot or 0 ) + adjusted_damage
+      end
+    end
     self:hit(dmg/4)
     HitCircle{group = main.current.effects, x = self.x, y = self.y, rs = 6, color = fg[0], duration = 0.1}
     for i = 1, 1 do HitParticle{group = main.current.effects, x = self.x, y = self.y, color = self.color} end

@@ -6,7 +6,6 @@ function Arena:init(name)
   self:init_game_object()
 end
 
-
 function Arena:on_enter(from, level, units, passives, shop_level, shop_xp, lock)
   self.hfx:add('condition1', 1)
   self.hfx:add('condition2', 1)
@@ -314,6 +313,7 @@ function Arena:on_enter(from, level, units, passives, shop_level, shop_xp, lock)
     self.t:after(0.75 + math.floor(n/4)*0.25, function() self.spawning_enemies = false end, 'spawning_enemies')
     self.enemy_spawns_prevented = 0
   end)
+
 end
 
 
@@ -958,6 +958,29 @@ function Arena:draw()
         end
       end
     end
+  end
+  if true then
+    local data = self.data_cache or {}
+    for index,unit in pairs( self.player:get_all_units() ) do
+      if unit.stats_tracker.damage.all > 0 then
+        data[unit.character] = { damage = unit.stats_tracker.damage.all, level = unit.level}
+      end
+    end
+    local sorted_data = {}
+    for unit_character,d in pairs(data) do
+      table.insert( sorted_data, { character = unit_character, damage = d.damage, level = d.level } )
+    end
+    table.sort( sorted_data, function( a, b ) return a.damage > b.damage end )
+    for index,stats_data in ipairs( sorted_data ) do
+      local damage = stats_data.damage
+      local unit_character = stats_data.character
+      local unit_level = stats_data.level
+      local scale = 1.0
+      local is_alive = self.player:get_unit(unit_character)
+      graphics.print( unit_character:sub(1,7) .. " Lv." .. unit_level, pixul_font, 2, pixul_font.h * index, 0, scale, scale, nil, pixul_font.h - 2, is_alive and character_colors[unit_character] or bg[5])
+      graphics.print( math.floor((damage or 0) + 0.5), pixul_font, 100, pixul_font.h * index, 0, scale, scale, nil, pixul_font.h - 2, fg[0])
+    end
+    self.data_cache = data
   end
   camera:detach()
 

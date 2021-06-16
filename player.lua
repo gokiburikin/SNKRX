@@ -6,6 +6,17 @@ function Player:init(args)
   self:init_game_object(args)
   self:init_unit()
 
+  self.stats_tracker = {
+    damage = {
+      all = 0,
+      projectile = 0,
+      area = 0,
+      dot = 0,
+      collision = 0
+    },
+    healing = {}
+  }
+
   if self.passives then for k, v in pairs(self.passives) do self[v.passive] = v.level end end
 
   self.color = character_colors[self.character]
@@ -60,7 +71,7 @@ function Player:init(args)
       local enemy = table.shuffle(main.current.main:get_objects_by_classes(main.current.enemies))[1]
       if enemy then
         gambler1:play{pitch = pitch_a, volume = math.remap(gold, 0, 50, 0, 0.8)}
-        enemy:hit(2*gold)
+        enemy:hit(2*gold,self)
         if main.current.sorcerer_level > 0 then
           self.sorcerer_count = self.sorcerer_count + 1
           if self.sorcerer_count >= ((main.current.sorcerer_level == 3 and 2) or (main.current.sorcerer_level == 2 and 3) or (main.current.sorcerer_level == 1 and 4)) then
@@ -69,7 +80,7 @@ function Player:init(args)
               local enemy = table.shuffle(main.current.main:get_objects_by_classes(main.current.enemies))[1]
               if enemy then
                 gambler1:play{pitch = pitch_a + 0.05, volume = math.remap(gold, 0, 50, 0, 0.8)}
-                enemy:hit(2*gold)
+                enemy:hit(2*gold,self)
               end
             end)
           end
@@ -514,7 +525,7 @@ function Player:init(args)
       local enemies = table.first2(table.shuffle(self:get_objects_in_shape(self.wide_attack_sensor, main.current.enemies)), 3)
       for _, enemy in ipairs(enemies) do
         enemy:curse('usurer', 10000, self.level == 3, self)
-        enemy:apply_dot(self.dmg*(self.dot_dmg_m or 1)*(main.current.chronomancer_dot or 1), 10000)
+        enemy:apply_dot(self.dmg*(self.dot_dmg_m or 1)*(main.current.chronomancer_dot or 1), 10000, self)
         HitCircle{group = main.current.effects, x = self.x, y = self.y, rs = 6, color = purple[0], duration = 0.1}
         LightningLine{group = main.current.effects, src = self, dst = enemy, color = purple[0]}
       end
@@ -535,7 +546,7 @@ function Player:init(args)
             if main.current.curser_level == 2 then curse_m = 1.5
             elseif main.current.curser_level == 1 then curse_m = 1.25
             else curse_m = 1 end
-            enemy:apply_dot(self.dmg*(self.dot_dmg_m or 1)*(main.current.chronomancer_dot or 1), 6*(self.hex_duration_m or 1)*(curse_m or 1))
+            enemy:apply_dot(self.dmg*(self.dot_dmg_m or 1)*(main.current.chronomancer_dot or 1), 6*(self.hex_duration_m or 1)*(curse_m or 1), self)
           end
           HitCircle{group = main.current.effects, x = self.x, y = self.y, rs = 6, color = blue2[0], duration = 0.1}
           LightningLine{group = main.current.effects, src = self, dst = enemy, color = blue2[0]}
@@ -1324,8 +1335,8 @@ function Player:on_collision_enter(other, contact)
 
   elseif table.any(main.current.enemies, function(v) return other:is(v) end) then
     other:push(random:float(25, 35)*(self.knockback_m or 1), self:angle_to_object(other))
-    if self.character == 'vagrant' or self.character == 'psykeeper' then other:hit(2*self.dmg)
-    else other:hit(self.dmg) end
+    if self.character == 'vagrant' or self.character == 'psykeeper' then other:hit(2*self.dmg,self)
+    else other:hit(self.dmg,self) end
     if other.headbutting then
       self:hit((4 + math.floor(other.level/3))*other.dmg)
     else self:hit(other.dmg) end
@@ -1383,7 +1394,7 @@ function Player:hit(damage, from_undead)
         buff1:play{pitch = random:float(0.95, 1.05), volume = 0.5}
         local enemies = main.current.main:get_objects_by_classes(main.current.enemies)
         for _, enemy in ipairs(enemies) do
-          enemy:hit(2*psykeeper.stored_heal/#enemies)
+          enemy:hit(2*psykeeper.stored_heal/#enemies,self)
           HitCircle{group = main.current.effects, x = self.x, y = self.y, rs = 6, color = fg[0], duration = 0.1}
           LightningLine{group = main.current.effects, src = self, dst = enemy, color = fg[0]}
         end
@@ -1740,7 +1751,7 @@ function Projectile:init(args)
           magic_area1:play{pitch = random:float(0.95, 1.05), volume = 0.075}
           local enemies = self:get_objects_in_shape(self.pull_sensor, main.current.enemies)
           for _, enemy in ipairs(enemies) do
-            enemy:hit(3*self.compression_dmg)
+            enemy:hit(3*self.compression_dmg,self)
           end
         end
       end)
@@ -2045,7 +2056,8 @@ function Projectile:on_trigger_enter(other, contact)
       hit3:play{pitch = random:float(0.95, 1.05), volume = 0.35}
     end
 
-    other:hit(self.dmg*(self.distance_dmg_m or 1), self)
+    local damage_dealt = self.dmg*(self.distance_dmg_m or 1)
+    other:hit(damage_dealt, self)
 
     if self.character == 'wizard' and self.level == 3 then
       Area{group = main.current.effects, x = self.x, y = self.y, r = self.r, w = self.parent.area_size_m*32, color = self.color, dmg = self.parent.area_dmg_m*self.dmg, character = self.character, parent = self,
@@ -2070,15 +2082,17 @@ function Projectile:on_trigger_enter(other, contact)
     end
 
     if self.character == 'assassin' then
-      other:apply_dot((self.crit and 4*self.dmg or self.dmg/2)*(self.dot_dmg_m or 1)*(main.current.chronomancer_dot or 1), 3)
+      other:apply_dot((self.crit and 4*self.dmg or self.dmg/2)*(self.dot_dmg_m or 1)*(main.current.chronomancer_dot or 1), 3, self.parent)
     end
 
     if self.parent.chain_infused then
       local units = self.parent:get_all_units()
+      local damage_source = nil
       local stormweaver_level = 0
       for _, unit in ipairs(units) do
         if unit.character == 'stormweaver' then
           stormweaver_level = unit.level
+          damage_source = unit
           break
         end
       end
@@ -2088,7 +2102,7 @@ function Projectile:on_trigger_enter(other, contact)
         table.insert(self.infused_enemies_hit, src)
         local dst = src:get_random_object_in_shape(Circle(src.x, src.y, (stormweaver_level == 3 and 128 or 64)), main.current.enemies, self.infused_enemies_hit)
         if dst then
-          dst:hit(0.2*self.dmg*(self.distance_dmg_m or 1))
+          dst:hit(0.2*self.dmg*(self.distance_dmg_m or 1),damage_source)
           LightningLine{group = main.current.effects, src = src, dst = dst}
           src = dst 
         end
@@ -2811,7 +2825,7 @@ function Pet:on_trigger_enter(other)
   if table.any(main.current.enemies, function(v) return other:is(v) end) then
     if self.pierce <= 0 then
       camera:shake(2, 0.5)
-      other:hit(self.parent.dmg*(self.conjurer_buff_m or 1))
+      other:hit(self.parent.dmg*(self.conjurer_buff_m or 1),self)
       other:push(35*(self.knockback_m or 1), self:angle_to_object(other))
       self.dead = true
       local n = random:int(3, 4)
@@ -2819,7 +2833,7 @@ function Pet:on_trigger_enter(other)
       HitCircle{group = main.current.effects, x = x, y = y}:scale_down()
     else
       camera:shake(2, 0.5)
-      other:hit(self.parent.dmg*(self.conjurer_buff_m or 1))
+      other:hit(self.parent.dmg*(self.conjurer_buff_m or 1),self)
       other:push(35*(self.knockback_m or 1), self:angle_to_object(other))
       self.pierce = self.pierce - 1
     end
