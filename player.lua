@@ -2465,7 +2465,7 @@ function ForceArea:init(args)
         elementor1:play{pitch = random:float(0.9, 1.1), volume = 0.5}
         local enemies = main.current.main:get_objects_in_shape(self.shape, main.current.enemies)
         for _, enemy in ipairs(enemies) do
-          enemy:hit(4*self.parent.dmg)
+          enemy:hit(4*self.parent.dmg,self.parent)
           enemy:push(50*(self.knockback_m or 1), self:angle_to_object(enemy))
         end
       end

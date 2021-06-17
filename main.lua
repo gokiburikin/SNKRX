@@ -1485,6 +1485,37 @@ function init()
   if not state.current_new_game_plus then state.current_new_game_plus = current_new_game_plus end
   max_units = 7 + current_new_game_plus
 
+  stats_tracker = nil
+  clear_stats_tracker = function()
+    stats_tracker = {
+      damage = {
+        all = {},
+        highest = {},
+        projectile = {},
+        area = {},
+        dot = {},
+        collision = {},
+        healing = {}
+      }
+    }
+  end
+  clear_stats_tracker()
+  damage_number_queue = {}
+
+  local character_damage_overrides = {
+    arcanist_projectile = "arcanist"
+  }
+
+  report_damage = function( type, character, amount,  x, y )
+    character = character_damage_overrides[character] or character
+    if type == "all" then
+      stats_tracker.damage.all[character] = (stats_tracker.damage.all[character] or 0) + amount
+    end
+    stats_tracker.damage.highest[character] = math.max( stats_tracker.damage.highest[character] or 0, amount )
+    table.insert( damage_number_queue, { amount = amount, character = character, x = x or 0, y = y or 0 } )
+  end
+
+
   main = Main()
 
   if run.level and run.level > 0 then
@@ -1523,21 +1554,6 @@ function init()
       print()
     end
   end)
-
-  stats_tracker = nil
-  clear_stats_tracker = function()
-    stats_tracker = {
-      damage = {
-        all = {},
-        projectile = {},
-        area = {},
-        dot = {},
-        collision = {},
-        healing = {}
-      }
-    }
-  end
-  clear_stats_tracker()
 
 
   --[[

@@ -610,6 +610,12 @@ function Arena:update(dt)
     end
   end
 
+  for i=#damage_number_queue,1,-1 do
+    local data = damage_number_queue[i]
+    DamageNumber{ group = self.ui, character = data.character, amount = data.amount, x = data.x, y = data.y }
+  end
+  damage_number_queue = {}
+
   self:update_game_object(dt*slow_amount)
   main_song_instance.pitch = math.clamp(slow_amount*self.main_slow_amount, 0.05, 1)
 
@@ -961,12 +967,8 @@ function Arena:draw()
     end
   end
   if true then
-    local character_overrides = {
-      arcanist_projectile = "arcanist"
-    }
     local data = self.data_cache or {}
     for character,amount in pairs( stats_tracker.damage.all ) do
-      character = character_overrides[character] or character
       if amount > 0 then
         data[character] = amount
       end
@@ -977,14 +979,16 @@ function Arena:draw()
     end
     table.sort( sorted_data, function( a, b ) return a.damage > b.damage end )
     for index,stats_data in ipairs( sorted_data ) do
-      local damage = stats_data.damage
       local character = stats_data.character
+      local damage = stats_data.damage
+      local highest_damage = stats_tracker.damage.highest[character]
       local scale = 1.0
       local unit = self.player:get_unit(character)
       local is_alive = unit ~= nil
       local level = unit and unit.level or 0
       graphics.print( character:sub(1,7) .. ( is_alive and (" Lv." .. level) or ""), pixul_font, 2, pixul_font.h * index, 0, scale, scale, nil, pixul_font.h - 2, is_alive and character_colors[character] or bg[5])
       graphics.print( math.floor((damage or 0) + 0.5), pixul_font, 100, pixul_font.h * index, 0, scale, scale, nil, pixul_font.h - 2, fg[0])
+      graphics.print( math.floor((highest_damage) or 0 + 0.5), pixul_font, 160, pixul_font.h * index, 0, scale, scale, nil, pixul_font.h - 2, bg[5])
     end
     self.data_cache = data
   end
@@ -1349,4 +1353,27 @@ end
 
 function CharacterHP:change_hp()
   self.hfx:use('hit', 0.5)
+end
+
+
+DamageNumber = Object:extend()
+DamageNumber:implement(GameObject)
+function DamageNumber:init(args)
+  self:init_game_object(args)
+  self.vy = random:float( -100, -150 )
+  self.vx = random:float( -35, 35 )
+  self.t:after( 0.4, function() self.dead = true end, "timeout" )
+end
+
+function DamageNumber:update(dt)
+  self:update_game_object(dt)
+  self.vy = self.vy + 500 * dt
+  self.x = self.x + self.vx * dt
+  self.y = self.y + self.vy * dt
+end
+
+function DamageNumber:draw()
+  graphics.push(self.x, self.y)
+  graphics.print( math.floor( self.amount + 0.5 ), pixul_font, self.x, self.y, 0, scale, scale, nil, pixul_font.h, character_colors[self.character] or fg[0])
+  graphics.pop()
 end

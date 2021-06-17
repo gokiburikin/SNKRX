@@ -425,7 +425,7 @@ function Seeker:hit(damage, source)
   
   if source and source.character then
       local adjusted_damage = math.min( self.hp, actual_damage )
-      stats_tracker.damage.all[source.character] = (stats_tracker.damage.all[source.character] or 0 ) + adjusted_damage
+      report_damage( "all", source.character, adjusted_damage, self.x, self.y )
   end
   
   self.hp = self.hp - actual_damage
@@ -636,7 +636,7 @@ function Seeker:apply_dot(dmg, duration, source)
     if source then
       if source and source.character then
         local adjusted_damage = math.min( self.hp, dmg/4 )
-        stats_tracker.damage.all[source.character] = (stats_tracker.damage.all[source.character] or 0 ) + adjusted_damage
+        report_damage( "all", source.character, adjusted_damage, self.x, self.y )
       end
     end
     self:hit(dmg/4)
