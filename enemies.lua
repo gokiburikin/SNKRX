@@ -423,9 +423,9 @@ function Seeker:hit(damage, source)
   local actual_damage = math.max(self:calculate_damage(damage)*(self.stun_dmg_m or 1), 0)
   if self.vulnerable then actual_damage = actual_damage*1.2 end
   
-  if source and source.character then
-      local adjusted_damage = math.min( self.hp, actual_damage )
-      report_damage( "all", source.character, adjusted_damage, self.x, self.y )
+  if source then
+    local adjusted_damage = math.min( self.hp, actual_damage )
+    report_damage( "all", find_source_character(source), adjusted_damage, self.x, self.y )
   end
   
   self.hp = self.hp - actual_damage
@@ -633,13 +633,12 @@ end
 function Seeker:apply_dot(dmg, duration, source)
   self.t:every(0.25, function()
     hit2:play{pitch = random:float(0.8, 1.2), volume = 0.2}
+    local actual_damage = dmg / 4
     if source then
-      if source and source.character then
-        local adjusted_damage = math.min( self.hp, dmg/4 )
-        report_damage( "all", source.character, adjusted_damage, self.x, self.y )
-      end
+      local adjusted_damage = math.min( self.hp, actual_damage )
+      report_damage( "all", find_source_character(source), adjusted_damage, self.x, self.y )
     end
-    self:hit(dmg/4)
+    self:hit(actual_damage)
     HitCircle{group = main.current.effects, x = self.x, y = self.y, rs = 6, color = fg[0], duration = 0.1}
     for i = 1, 1 do HitParticle{group = main.current.effects, x = self.x, y = self.y, color = self.color} end
     for i = 1, 1 do HitParticle{group = main.current.effects, x = self.x, y = self.y, color = purple[0]} end

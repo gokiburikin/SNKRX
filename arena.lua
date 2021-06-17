@@ -966,7 +966,8 @@ function Arena:draw()
       end
     end
   end
-  if true then
+
+  if state.track_stats then
     local data = self.data_cache or {}
     for character,amount in pairs( stats_tracker.damage.all ) do
       if amount > 0 then
@@ -982,13 +983,13 @@ function Arena:draw()
       local character = stats_data.character
       local damage = stats_data.damage
       local highest_damage = stats_tracker.damage.highest[character]
-      local scale = 1.0
+      local scale = 0.5
       local unit = self.player:get_unit(character)
       local is_alive = unit ~= nil
       local level = unit and unit.level or 0
-      graphics.print( character:sub(1,7) .. ( is_alive and (" Lv." .. level) or ""), pixul_font, 2, pixul_font.h * index, 0, scale, scale, nil, pixul_font.h - 2, is_alive and character_colors[character] or bg[5])
-      graphics.print( math.floor((damage or 0) + 0.5), pixul_font, 100, pixul_font.h * index, 0, scale, scale, nil, pixul_font.h - 2, fg[0])
-      graphics.print( math.floor((highest_damage) or 0 + 0.5), pixul_font, 160, pixul_font.h * index, 0, scale, scale, nil, pixul_font.h - 2, bg[5])
+      graphics.print( character .. ( is_alive and (" Lv." .. level) or ""), micro_font, 2, micro_font.h * index * scale, 0, scale, scale, nil, micro_font.h - 2, is_alive and character_colors[character] or bg[5])
+      graphics.print( math.floor((damage or 0) + 0.5), micro_font, 90, micro_font.h * index * scale, 0, scale, scale, nil, micro_font.h - 2, fg[0])
+      graphics.print( math.floor((highest_damage) or 0 + 0.5), micro_font, 120, micro_font.h * index * scale, 0, scale, scale, nil, micro_font.h - 2, bg[5])
     end
     self.data_cache = data
   end
@@ -1367,7 +1368,7 @@ end
 
 function DamageNumber:update(dt)
   self:update_game_object(dt)
-  self.vy = self.vy + 500 * dt
+  self.vy = self.vy + random:float(350, 500) * dt
   self.x = self.x + self.vx * dt
   self.y = self.y + self.vy * dt
 end

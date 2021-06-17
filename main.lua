@@ -1506,13 +1506,29 @@ function init()
     arcanist_projectile = "arcanist"
   }
 
+  find_source_character = function( source )
+    if source.character then
+      return source.character
+    else
+      source = source.parent
+      while source do
+        if source.character then
+          return source.character
+        end
+        source = source.parent
+      end
+    end
+  end
+
   report_damage = function( type, character, amount,  x, y )
-    character = character_damage_overrides[character] or character
+    character = character_damage_overrides[character] or character or "unsourced"
     if type == "all" then
       stats_tracker.damage.all[character] = (stats_tracker.damage.all[character] or 0) + amount
     end
     stats_tracker.damage.highest[character] = math.max( stats_tracker.damage.highest[character] or 0, amount )
-    table.insert( damage_number_queue, { amount = amount, character = character, x = x or 0, y = y or 0 } )
+    if state.show_damage_numbers then
+      table.insert( damage_number_queue, { amount = amount, character = character, x = x or 0, y = y or 0 } )
+    end
   end
 
 
@@ -1582,6 +1598,14 @@ function update(dt)
     print()
   end
   ]]--
+
+  if input.t.pressed then
+    state.track_stats = not (state.track_stats or false)
+  end
+
+  if input.g.pressed then
+    state.show_damage_numbers = not (state.show_damage_numbers or false)
+  end
 
   if input.n.pressed then
     if main.current.sfx_button then
