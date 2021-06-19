@@ -54,7 +54,6 @@ function Arena:on_enter(from, level, units, passives, shop_level, shop_xp, lock)
   self.main:enable_trigger_between('enemy_projectile', 'player')
   self.main:enable_trigger_between('player', 'enemy_projectile')
   self.main:enable_trigger_between('enemy_projectile', 'enemy')
-  self.main:enable_trigger_between('enemy', 'enemy_projectile')
   self.main:enable_trigger_between('player', 'ghost')
   self.main:enable_trigger_between('ghost', 'player')
 
@@ -993,7 +992,7 @@ function Arena:draw()
       local character = stats_data.character
       local damage = stats_data.damage
       local highest_damage = stats_tracker.damage.highest[character]
-      local scale = 0.5
+      local scale = 1.0
       local unit = self.player:get_unit(character)
       local is_alive = unit ~= nil
       local level = unit and unit.level or 0

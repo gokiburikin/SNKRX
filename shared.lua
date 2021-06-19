@@ -40,7 +40,7 @@ function shared_init()
 
   fat_font = Font('FatPixelFont', 8)
   pixul_font = Font('PixulBrush', 8)
-  micro_font = Font('AtariSmall', 16)
+  micro_font = Font('micro_font', 8)
   background_canvas = Canvas(gw, gh)
   main_canvas = Canvas(gw, gh, {stencil = true})
   shadow_canvas = Canvas(gw, gh)
